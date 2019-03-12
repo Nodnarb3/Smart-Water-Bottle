@@ -60,12 +60,22 @@ void loop()
   if(t > flashPoint)
   {
      Serial.println("Flashing");
-     flash(CRGB(red, green, 0));
+     flash(CRGB(0, green, red));
   }
-  else
-  {
-    
-     fill(CRGB(red, green, 0));
+  else if(t >= 0.0 && t < 0.25){
+    fill(CRGB(red, green, 0));
+  }
+  else if(t >= 0.25 && t < 0.5){
+    fill_3(CRGB(red, green, 0));
+  }
+  else if(t >= 0.5 && t < 0.75){
+    fill_2(CRGB(red, green, 0));
+  }
+  else if(t >= 0.75 && t < 0.95){
+    fill_1(CRGB(red, green, 0));
+  }
+  else{
+     fill(CRGB(0, green, red));
   }
   
   FastLED.show();
@@ -135,4 +145,31 @@ void fill(CRGB color)
     {
       leds[i] = color;
     }
+}
+
+void fill_3(CRGB color){
+  for(int i = 0; i < NUM_LEDS - 6; i++){
+    leds[i] = color;
+  }
+  for(int i = NUM_LEDS - 6; i < NUM_LEDS; i ++){
+    leds[i] = CRGB :: Blue;
+  }
+}
+
+void fill_2(CRGB color){
+  for(int i = 0; i < NUM_LEDS - 12; i++){
+    leds[i] = color;
+  }
+  for(int i = NUM_LEDS - 12; i < NUM_LEDS; i ++){
+    leds[i] = CRGB :: Blue;
+  }
+}
+
+void fill_1(CRGB color){
+  for(int i = 0; i < NUM_LEDS - 18; i ++){
+    leds[i] = color;
+  }
+  for(int i = NUM_LEDS - 18; i < NUM_LEDS; i++){
+    leds[i] = CRGB :: Blue;
+  }
 }
