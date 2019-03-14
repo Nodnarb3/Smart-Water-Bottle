@@ -18,6 +18,7 @@ CRGB leds[NUM_LEDS];
 const int buttonPin = 3;     // the number of the pushbutton pin
 const int ledPin =  LED_BUILTIN;      // the number of the LED pin for turning on and off, not the LEDs that will be changing colours
 const int vibePin = 6;
+uint8_t gHue = 0;
 // variables will change:
 int buttonState = 0;         // variable for reading the pushbutton status
 long changemillis = 0;  // to check how often the button is changing
@@ -30,6 +31,9 @@ float flashPoint = 1.0;
 int flashRateOn = 100;
 int flashRateOff = 100;
 long flashTime = 0;
+int bcounter = 3;
+int ycounter = 1;
+int counter = 0;
 
 void setup() {
   delay(3000); // 3 second delay for recovery
@@ -46,23 +50,50 @@ void loop()
   // Call the current pattern function once, updating the 'leds' array
   // insert a delay to keep the framerate modest
   //FastLED.delay(1000 / FRAMES_PER_SECOND);
+  delay(6000);
   buttonState = digitalRead(buttonPin);
-  
+  counter++;
+  Serial.println(counter);
   float t = constrain(((millis() - lastReminder)*1.0) / ( maxReminderTime *1.0), 0.0, 1.5);
   Serial.println(t);
 
   //Change brightness as time goes on
   FastLED.setBrightness( constrain(round( MAX_BRIGHTNESS * t ), MIN_BRIGHTNESS, MAX_BRIGHTNESS));
 
-  int red = constrain(round(t * 255), 0, 255);
+  int blue = constrain(round(t * 255), 0, 255);
   int green = 255 - constrain(round(t * 255), 0, 255);
+  EVERY_N_MILLISECONDS( 20 ) { gHue++; }
 
+  if(t > flashPoint){
+    Serial.println("Time to Drink!!");
+    flash(CRGB :: Blue);
+  } else if(t >=0.0 && t < 0.30){
+    fill(CRGB :: Green);
+  } else if(t >=0.30 && t < 0.33){
+    fadeToBlack(bcounter);
+  } else if(t >=0.33 && t < 0.36){
+    fadeToYellow(ycounter);
+  } else if(t >= 0.36 && t < 0.66){
+    fill(CRGB :: Yellow);
+  } else if(t >= 0.66 && t < 0.69){
+    fadeToBlack(bcounter);
+  } else if(t >= 0.69 && t < 0.72){
+    fadeToBlue(ycounter);
+  } else if(t >= 0.72 && t < 1.00){
+    fill(CRGB :: Blue);
+  } else{
+    //Error
+    flash(CRGB :: Red);
+  }
+
+/*
   if(t > flashPoint)
   {
      Serial.println("Flashing");
      flash(CRGB(0, green, red));
   }
-  else if(t >= 0.0 && t < 0.25){
+  else 
+  if(t >= 0.0 && t < 0.25){
     fill(CRGB(red, green, 0));
   }
   else if(t >= 0.25 && t < 0.5){
@@ -75,9 +106,21 @@ void loop()
     fill_1(CRGB(red, green, 0));
   }
   else{
-     fill(CRGB(0, green, red));
+     sinelon();
+     //fill(CRGB(0, green, red));
   }
-  
+  */
+  if(bcounter == 1){
+    bcounter = 3;
+  } else{
+    bcounter--;
+  }
+
+  if(ycounter == 3){
+    ycounter = 1;
+  } else{
+    ycounter++;
+  }
   FastLED.show();
 
 
@@ -126,7 +169,7 @@ void flash(CRGB color)
   }
   else
   {
-    fill(color);
+    fill(CRGB :: Blue);
 
     Serial.println(digitalRead(vibePin));
     
@@ -139,6 +182,33 @@ void flash(CRGB color)
   }
 }
 
+void fill(CRGB colour){
+   FastLED.setBrightness(MAX_BRIGHTNESS);
+  for(int i = 0; i < NUM_LEDS; i++){
+      leds[i] = colour;
+  }
+}
+void fadeToBlack(int interval){
+  int brightness = (MAX_BRIGHTNESS * (interval/3));
+  FastLED.setBrightness(brightness);
+}
+
+void fadeToYellow(int interval){
+  for(int i = 0; i < NUM_LEDS; i++){
+    leds[i] = CRGB :: Yellow;
+  }
+  int brightness = (MAX_BRIGHTNESS * (interval/3));
+  FastLED.setBrightness(brightness);
+}
+
+void fadeToBlue(int interval){
+  for(int i = 0; i < NUM_LEDS; i++){
+    leds[i] = CRGB :: Blue;
+  }
+  int brightness = (MAX_BRIGHTNESS * (interval/3));
+  FastLED.setBrightness(brightness);
+}
+/*
 void fill(CRGB color)
 {
     for (int i = 0; i < NUM_LEDS; i++)
@@ -172,4 +242,18 @@ void fill_1(CRGB color){
   for(int i = NUM_LEDS - 18; i < NUM_LEDS; i++){
     leds[i] = CRGB :: Blue;
   }
+}
+*/
+void sinelon()
+{
+  // a colored dot sweeping back and forth, with fading trails
+  fadeToBlackBy( leds, NUM_LEDS, 20);
+  int pos = beatsin16( 5, 0, NUM_LEDS-1 );
+  //fill(CRGB::Blue);
+  if(pos > 0){
+    leds[pos-1] += CRGB(65,105,225);
+  } else if(pos < NUM_LEDS-1){
+    leds[NUM_LEDS-1] += CRGB(65,105,225);
+  }
+  leds[pos] += CRGB :: Blue;
 }
