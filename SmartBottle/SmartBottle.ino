@@ -8,7 +8,7 @@ FASTLED_USING_NAMESPACE
 #define DATA_PIN    5
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
-#define NUM_LEDS    25
+#define NUM_LEDS    16
 CRGB leds[NUM_LEDS];
 #define MAX_BRIGHTNESS     255
 #define MIN_BRIGHTNESS     10
@@ -62,23 +62,22 @@ void loop()
   int blue = constrain(round(t * 255), 0, 255);
   int green = 255 - constrain(round(t * 255), 0, 255);
 
-  if(t > flashPoint){
-    Serial.println("Time to Drink!!");
-    flash(CRGB :: Blue);
-  } else if(t >=0.0 && t < 0.30){
+  if(t >= 1.5){
+      flash(CRGB :: Blue);
+  } else if(t >=0.0 && t < 0.50){
     fill(CRGB :: Green);
-  } else if(t >=0.30 && t < 0.33){
+  } else if(t >=0.50 && t < 0.53){
     fadeToBlack();
-  } else if(t >=0.33 && t < 0.36){
+  } else if(t >=0.53 && t < 0.56){
     fadeToYellow();
-  } else if(t >= 0.36 && t < 0.66){
+  } else if(t >= 0.56 && t < 1.0){
     fill(CRGB :: Yellow);
-  } else if(t >= 0.66 && t < 0.69){
+  } else if(t >= 1.0 && t < 1.03){
     fadeToBlack();
-  } else if(t >= 0.69 && t < 0.72){
+  } else if(t >= 1.03 && t < 1.06){
     fadeToBlue();
-  } else if(t >= 0.72 && t < 1.00){
-    fill(CRGB :: Blue);
+  } else if(t >= 1.06 && t < 1.5){
+    RunningLights(0x00,0x00,0xff, 120);
   } else{
     //Error
     flash(CRGB :: Red);
@@ -260,14 +259,24 @@ void fill_1(CRGB color){
 */
 void sinelon()
 {
-  // a colored dot sweeping back and forth, with fading trails
-  fadeToBlackBy( leds, NUM_LEDS, 20);
-  int pos = beatsin16( 5, 0, NUM_LEDS-1 );
-  //fill(CRGB::Blue);
-  if(pos > 0){
-    leds[pos-1] += CRGB(65,105,225);
-  } else if(pos < NUM_LEDS-1){
-    leds[NUM_LEDS-1] += CRGB(65,105,225);
+  fadeToBlackBy( leds, (NUM_LEDS/2), 20);
+ int pos = beatsin16( 600, 0, (NUM_LEDS/2)-1);
+ leds[pos] += CRGB :: Blue;
+}
+
+void RunningLights(byte red, byte green, byte blue, int WaveDelay) {
+  int Position=0;
+  
+  for(int j=0; j<NUM_LEDS*2; j++)
+  {
+      Position++; // = 0; //Position + Rate;
+      for(int i=0; i<NUM_LEDS; i++) {
+        leds[i]= CRGB(((sin(i+Position) * 127 + 128)/255)*red,
+                   ((sin(i+Position) * 127 + 128)/255)*green,
+                   ((sin(i+Position) * 127 + 128)/255)*blue);
+      }
+      
+    FastLED.show();
+    delay(WaveDelay);
   }
-  leds[pos] += CRGB :: Blue;
 }
