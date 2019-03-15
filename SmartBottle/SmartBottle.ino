@@ -10,7 +10,7 @@ FASTLED_USING_NAMESPACE
 #define COLOR_ORDER GRB
 #define NUM_LEDS    25
 CRGB leds[NUM_LEDS];
-#define MAX_BRIGHTNESS     90
+#define MAX_BRIGHTNESS     255
 #define MIN_BRIGHTNESS     10
 #define FRAMES_PER_SECOND  144
 // constants won't change. They're used here to
@@ -25,20 +25,19 @@ long changemillis = 0;  // to check how often the button is changing
 
 long lastReminder = 0;
 long maxReminderTime = 20000;
+long fadeTime;
+bool fading = false;
 
 int flashState = 0;
 float flashPoint = 1.0;
 int flashRateOn = 100;
 int flashRateOff = 100;
 long flashTime = 0;
-int bcounter = 3;
-int ycounter = 1;
-int counter = 0;
 
 void setup() {
   delay(3000); // 3 second delay for recovery
   FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.setBrightness(MIN_BRIGHTNESS);
+  FastLED.setBrightness(MAX_BRIGHTNESS);
   pinMode(ledPin, OUTPUT);
   pinMode(buttonPin, INPUT);
   pinMode(vibePin, OUTPUT);
@@ -50,19 +49,18 @@ void loop()
   // Call the current pattern function once, updating the 'leds' array
   // insert a delay to keep the framerate modest
   //FastLED.delay(1000 / FRAMES_PER_SECOND);
-  delay(6000);
+  //delay(6000);
   buttonState = digitalRead(buttonPin);
-  counter++;
-  Serial.println(counter);
+  //counter++;
+  //Serial.println(counter);
   float t = constrain(((millis() - lastReminder)*1.0) / ( maxReminderTime *1.0), 0.0, 1.5);
   Serial.println(t);
 
   //Change brightness as time goes on
-  FastLED.setBrightness( constrain(round( MAX_BRIGHTNESS * t ), MIN_BRIGHTNESS, MAX_BRIGHTNESS));
+  //FastLED.setBrightness( constrain(round( MAX_BRIGHTNESS * t ), MIN_BRIGHTNESS, MAX_BRIGHTNESS));
 
   int blue = constrain(round(t * 255), 0, 255);
   int green = 255 - constrain(round(t * 255), 0, 255);
-  EVERY_N_MILLISECONDS( 20 ) { gHue++; }
 
   if(t > flashPoint){
     Serial.println("Time to Drink!!");
@@ -70,15 +68,15 @@ void loop()
   } else if(t >=0.0 && t < 0.30){
     fill(CRGB :: Green);
   } else if(t >=0.30 && t < 0.33){
-    fadeToBlack(bcounter);
+    fadeToBlack();
   } else if(t >=0.33 && t < 0.36){
-    fadeToYellow(ycounter);
+    fadeToYellow();
   } else if(t >= 0.36 && t < 0.66){
     fill(CRGB :: Yellow);
   } else if(t >= 0.66 && t < 0.69){
-    fadeToBlack(bcounter);
+    fadeToBlack();
   } else if(t >= 0.69 && t < 0.72){
-    fadeToBlue(ycounter);
+    fadeToBlue();
   } else if(t >= 0.72 && t < 1.00){
     fill(CRGB :: Blue);
   } else{
@@ -110,17 +108,7 @@ void loop()
      //fill(CRGB(0, green, red));
   }
   */
-  if(bcounter == 1){
-    bcounter = 3;
-  } else{
-    bcounter--;
-  }
-
-  if(ycounter == 3){
-    ycounter = 1;
-  } else{
-    ycounter++;
-  }
+  
   FastLED.show();
 
 
@@ -142,7 +130,7 @@ void loop()
 void resetTimer()
 {
   lastReminder = millis();
-  FastLED.setBrightness(MIN_BRIGHTNESS);
+  FastLED.setBrightness(MAX_BRIGHTNESS);
   fill(CRGB::Green);
   flashPoint = 1.0;
   flashState = 0;
@@ -183,30 +171,56 @@ void flash(CRGB color)
 }
 
 void fill(CRGB colour){
-   FastLED.setBrightness(MAX_BRIGHTNESS);
   for(int i = 0; i < NUM_LEDS; i++){
       leds[i] = colour;
   }
 }
-void fadeToBlack(int interval){
-  int brightness = (MAX_BRIGHTNESS * (interval/3));
+void fadeToBlack(){
+  if(!fading)
+  {
+    fadeTime = millis();
+    fading = true;
+  }
+  float dt = (millis() - fadeTime) / 600.0;
+  Serial.println(dt);
+
+  int brightness =  constrain(round( MAX_BRIGHTNESS * (1 - dt) ), 0, MAX_BRIGHTNESS);
   FastLED.setBrightness(brightness);
+ 
+  Serial.println(brightness);
+  
 }
 
-void fadeToYellow(int interval){
-  for(int i = 0; i < NUM_LEDS; i++){
-    leds[i] = CRGB :: Yellow;
+void fadeToYellow(){
+  if(fading)
+  {
+    fadeTime = millis();
+    fading = false;
   }
-  int brightness = (MAX_BRIGHTNESS * (interval/3));
+  fill(CRGB::Yellow);
+  float dt = (millis() - fadeTime) / 600.0;
+  Serial.println(dt);
+
+  int brightness =  constrain(round( MAX_BRIGHTNESS * dt ), 0, MAX_BRIGHTNESS);
   FastLED.setBrightness(brightness);
+ 
+  Serial.println(brightness);
 }
 
-void fadeToBlue(int interval){
-  for(int i = 0; i < NUM_LEDS; i++){
-    leds[i] = CRGB :: Blue;
+void fadeToBlue(){
+  if(fading)
+  {
+    fadeTime = millis();
+    fading = false;
   }
-  int brightness = (MAX_BRIGHTNESS * (interval/3));
+  fill(CRGB::Blue);
+  float dt = (millis() - fadeTime) / 600.0;
+  Serial.println(dt);
+
+  int brightness =  constrain(round( MAX_BRIGHTNESS * dt ), 0, MAX_BRIGHTNESS);
   FastLED.setBrightness(brightness);
+ 
+  Serial.println(brightness);
 }
 /*
 void fill(CRGB color)
